@@ -6,8 +6,8 @@
 function views_autorefresh_views_data_alter(&$data) {
   // Add our autorefresh area to Global.
   $data['views']['autorefresh'] = array(
-    'title' => t('Autorefresh config'),
-    'help' => t('Enable autorefresh for this view.'),
+    'title' => t('Autorefresh'),
+    'help' => t('Enable autorefresh for this view. NOTE: This will automatically turn AJAX support ON.'),
     'area' => array(
       'handler' => 'views_autorefresh_handler_area_autorefresh',
     ),

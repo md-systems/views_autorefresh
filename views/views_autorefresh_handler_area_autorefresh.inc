@@ -170,6 +170,10 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     }
   }
 
+  function options_submit(&$form, &$form_state) {
+    $this->view->display_handler->set_option('use_ajax', TRUE);
+  }
+
   function render($empty = FALSE) {
     $args = array();
     $args['view'] = $this->view;

@@ -69,10 +69,13 @@ function theme_views_autorefresh($variables) {
 function views_autorefresh_views_ajax_data_alter(&$commands, $view) {
   $replace = isset($_REQUEST['autorefreshRequest']);
   if ($replace && !empty($view->autorefresh['incremental'])) {
-    foreach ($commands as &$command) {
+    foreach ($commands as $key => &$command) {
       if ($command['command'] == 'insert' && $command['selector'] == ('.view-dom-id-' . $view->dom_id)) {
         $command['command'] = 'viewsAutoRefreshIncremental';
         $command['view_name'] = $view->name;
+      }
+      if ($command['command'] == 'viewsScrollTop' && !count($view->result)) {
+        unset($commands[$key]);
       }
     }
   }

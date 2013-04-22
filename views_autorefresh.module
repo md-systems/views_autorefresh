@@ -74,7 +74,7 @@ function views_autorefresh_views_ajax_data_alter(&$commands, $view) {
         $command['command'] = 'viewsAutoRefreshIncremental';
         $command['view_name'] = $view->name;
       }
-      if ($command['command'] == 'viewsScrollTop' && !count($view->result)) {
+      if ($command['command'] == 'viewsScrollTop') {
         unset($commands[$key]);
       }
     }

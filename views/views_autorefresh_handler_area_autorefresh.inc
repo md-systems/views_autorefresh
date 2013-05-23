@@ -34,6 +34,7 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     $options['rowClassPrefix'] = array('default' => 'views-row-');
     $options['ping'] = array('default' => FALSE, 'bool' => TRUE);
     $options['ping_base_path'] = array('default' => '');
+    $options['ping_arguments'] = array('default' => '');
     return $options;
   }
 
@@ -144,13 +145,20 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
       '#default_value' => $this->options['ping'],
       '#description' => t('Use a custom script for faster check of new items. See <code>ping.php.example</code> in <code>views_autorefresh</code> folder for reference.'),
     );
-    global $base_url;
-    # TODO: offer to choose path to a module to better work out of the box with drupal_get_path() ?
     $form['ping_base_path'] = array(
       '#type' => 'textfield',
       '#title' => t('Path to the ping script'),
       '#default_value' => $this->options['ping_base_path'],
-      '#description' => t('This url is relative to the Drupal root.'),
+      '#description' => t('This path is relative to the Drupal root.'),
+      '#dependency' => array(
+        'edit-options-ping' => array(1),
+      ),
+    );
+    $form['ping_arguments'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Ping arguments'),
+      '#default_value' => $this->options['ping_arguments'],
+      '#description' => t('A PHP script that generates arguments that will be sent on the ping URL as query parameters. Do not surround with <code>&lt;?php&gt;</code> tag.'),
       '#dependency' => array(
         'edit-options-ping' => array(1),
       ),
@@ -161,11 +169,14 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     if (!is_numeric($form_state['values']['options']['interval'])) {
       form_set_error('interval', t('Invalid interval.'));
     }
-    # TODO: check the ping script actualy returns the json we are expecting?
     if ($form_state['values']['options']['ping']) {
-      $ping_base_path = $form_state['values']['options']['ping_base_path'];
-      if (!file_exists(DRUPAL_ROOT . '/' . $ping_base_path)) {
-        form_set_error('ping_base_path', t('Ping script not found.'));
+      $ping_base_path = DRUPAL_ROOT . '/' . $form_state['values']['options']['ping_base_path'];
+      if (!file_exists($ping_base_path)) {
+        form_set_error('ping_base_path', t('Ping script not found at %path.', array('%path' => $ping_base_path)));
+      }
+      $args = $this->eval_ping_arguments($form_state['values']['options']['ping_arguments']);
+      if (!is_array($args)) {
+        form_set_error('ping_arguments', t('Error in ping arguments script: %error', array('%error' => $args)));
       }
     }
   }
@@ -178,9 +189,10 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     $args = array();
     $args['view'] = $this->view;
     $args['interval'] = $this->options['interval'];
-    if  ($this->options['ping']) {
+    if ($this->options['ping']) {
       $args['ping'] = array(
         'ping_base_path' => $this->options['ping_base_path'],
+        'ping_args' => $this->eval_ping_arguments($this->options['ping_arguments']),
       );
     }
     if  ($this->options['incremental']) {
@@ -204,6 +216,30 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     }
 
     return theme('views_autorefresh', $args);
+  }
+
+  function eval_ping_arguments($script) {
+    $args = array();
+    if (empty($script)) return $args;
+
+    // Make view visible to script.
+    $view = $this->view;
+
+    // Avoid Drupal's error handler: http://www.php.net/manual/en/function.restore-error-handler.php#93261
+    set_error_handler(create_function('$errno,$errstr', 'return false;'));
+    $return = eval($script);
+    if ($return === FALSE) {
+      $error = error_get_last();
+      $args = $error['message'];
+    }
+    else if (is_array($return)) {
+      $args = $return;
+    }
+    else {
+      $args = t('expecting an array of arguments, got a !type instead.', array('!type' => gettype($return)));
+    }
+    restore_error_handler();
+    return $args;
   }
 }
 

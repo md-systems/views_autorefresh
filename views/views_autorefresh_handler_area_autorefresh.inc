@@ -18,7 +18,7 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
   }
 
   function option_definition() {
-    $options = array();
+    $options = parent::option_definition();
     $options['interval'] = array('default' => '');
     $options['incremental'] = array('default' => FALSE, 'bool' => TRUE);
     $options['display'] = array('default' => '');

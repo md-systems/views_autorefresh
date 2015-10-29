@@ -12,14 +12,15 @@ Drupal.behaviors.views_autorefresh = {
         ajax_path = ajax_path[0];
       }
       $.each(Drupal.settings.views.ajaxViews, function(i, settings) {
-        var view = '.view-dom-id-' + settings.view_dom_id;
-        if (!$(view).size()) {
+        var viewDom = '.view-dom-id-' + settings.view_dom_id;
+        var view = settings.view_name + '-' + settings.view_display_id;
+        if (!$(viewDom).size()) {
           // Backward compatibility: if 'views-view.tpl.php' is old and doesn't
           // contain the 'view-dom-id-#' class, we fall back to the old way of
           // locating the view:
-          view = '.view-id-' + settings.view_name + '.view-display-id-' + settings.view_display_id;
+          viewDom = '.view-id-' + settings.view_name + '.view-display-id-' + settings.view_display_id;
         }
-        $(view).filter(':not(.views-autorefresh-processed)')
+        $(viewDom).filter(':not(.views-autorefresh-processed)')
           // Don't attach to nested views. Doing so would attach multiple behaviors
           // to a given element.
           .filter(function() {
@@ -32,13 +33,13 @@ Drupal.behaviors.views_autorefresh = {
             var target = this;
             $('select,input,textarea', target)
               .click(function () {
-                if (Drupal.settings.views_autorefresh[settings.view_name].timer) {
-                  clearTimeout(Drupal.settings.views_autorefresh[settings.view_name].timer);
+                if (Drupal.settings.views_autorefresh[view] && Drupal.settings.views_autorefresh[view].timer) {
+                  clearTimeout(Drupal.settings.views_autorefresh[view].timer);
                 }
               })
               .change(function () {
-                if (Drupal.settings.views_autorefresh[settings.view_name].timer) {
-                  clearTimeout(Drupal.settings.views_autorefresh[settings.view_name].timer);
+                if (Drupal.settings.views_autorefresh[view] && Drupal.settings.views_autorefresh[view].timer) {
+                  clearTimeout(Drupal.settings.views_autorefresh[view].timer);
                 }
               });
             $(this)
@@ -58,18 +59,18 @@ Drupal.behaviors.views_autorefresh = {
                   // Settings must be used last to avoid sending url aliases to the server.
                   settings
                 );
-                Drupal.settings.views_autorefresh[settings.view_name].view_args = viewData.view_args;
+                Drupal.settings.views_autorefresh[view].view_args = viewData.view_args;
                 // Setup the click response with Drupal.ajax.
                 var element_settings = {};
                 element_settings.url = ajax_path;
                 element_settings.event = 'click';
                 element_settings.selector = view;
                 element_settings.submit = viewData;
-                Drupal.settings.views_autorefresh[settings.view_name].ajax = new Drupal.ajax(view, this, element_settings);
+                Drupal.settings.views_autorefresh[view].ajax = new Drupal.ajax(view, this, element_settings);
 
                 // Activate refresh timer.
-                clearTimeout(Drupal.settings.views_autorefresh[settings.view_name].timer);
-                Drupal.views_autorefresh.timer(settings.view_name, anchor, target);
+                clearTimeout(Drupal.settings.views_autorefresh[view].timer);
+                Drupal.views_autorefresh.timer(view, anchor, target);
               }); // .each function () {
         }); // $view.filter().each
       });
@@ -89,7 +90,7 @@ Drupal.views_autorefresh.timer = function(view_name, anchor, target) {
     if (Drupal.settings.views_autorefresh[view_name].ping) {
       ping_base_path = Drupal.settings.views_autorefresh[view_name].ping.ping_base_path;
     }
-    
+
     // Handle secondary view for incremental refresh.
     // http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
     var viewData = Drupal.settings.views_autorefresh[view_name].ajax.submit;
@@ -205,7 +206,7 @@ Drupal.ajax.prototype.commands.viewsAutoRefreshIncremental = function (ajax, res
 
     // Reactivate refresh timer.
     Drupal.views_autorefresh.timer(response.view_name, $('.auto-refresh a', $view), $view);
-    
+
     // Attach behaviors
     Drupal.attachBehaviors($view);
   }
@@ -213,4 +214,3 @@ Drupal.ajax.prototype.commands.viewsAutoRefreshIncremental = function (ajax, res
 
 // END jQuery
 })(jQuery);
-

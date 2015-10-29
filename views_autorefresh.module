@@ -48,7 +48,7 @@ function theme_views_autorefresh($variables) {
 
   // Add the JavaScript settings.
   drupal_add_js(drupal_get_path('module', 'views_autorefresh') . '/views_autorefresh.js');
-  drupal_add_js(array('views_autorefresh' => array($view->name => array(
+  drupal_add_js(array('views_autorefresh' => array($view->name . '-' . $view->current_display => array(
     'interval' => $interval,
     'ping' => $ping,
     'incremental' => $incremental,
@@ -72,7 +72,7 @@ function views_autorefresh_views_ajax_data_alter(&$commands, $view) {
     foreach ($commands as $key => &$command) {
       if (!empty($view->autorefresh['incremental']) && $command['command'] == 'insert' && $command['selector'] == ('.view-dom-id-' . $view->dom_id)) {
         $command['command'] = 'viewsAutoRefreshIncremental';
-        $command['view_name'] = $view->name;
+        $command['view_name'] = $view->name. '-' . $view->current_display;
       }
       if ($command['command'] == 'viewsScrollTop') {
         unset($commands[$key]);

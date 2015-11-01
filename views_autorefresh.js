@@ -209,7 +209,7 @@ Drupal.ajax.prototype.commands.viewsAutoRefreshIncremental = function (ajax, res
       });
 
       // Trigger custom event on any plugin that needs to do extra work.
-      $view.trigger('autorefresh.incremental', $source.size());
+      $view.trigger('autorefresh_incremental', $source.size());
     }
 
     // Reactivate refresh timer if not using nodejs.

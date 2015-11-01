@@ -153,15 +153,15 @@ Drupal.ajax.prototype.commands.viewsAutoRefreshIncremental = function (ajax, res
     // http://stackoverflow.com/questions/4430707/trying-to-select-script-tags-from-a-jquery-ajax-get-response/4432347#4432347
     response.data = response.data.replace(/<(\/?)script([^>]*)>/gi, '<$1scripttag$2>');
 
+    var emptySelector = Drupal.settings.views_autorefresh[response.view_name].incremental.emptySelector || '.view-empty';
     var sourceSelector = Drupal.settings.views_autorefresh[response.view_name].incremental.sourceSelector || '.view-content';
     var $source = $(response.data).find(sourceSelector).not(sourceSelector + ' ' + sourceSelector).children();
-    if ($source.size() > 0) {
+    if ($source.size() > 0 && $(emptySelector, $source).size() <= 0) {
       var targetSelector = Drupal.settings.views_autorefresh[response.view_name].incremental.targetSelector || '.view-content';
       var $target = $view.find(targetSelector).not(targetSelector + ' ' + targetSelector);
 
       // If initial view was empty, remove the empty divs then add the target div.
       if ($target.size() == 0) {
-        var emptySelector = Drupal.settings.views_autorefresh[response.view_name].incremental.emptySelector || '.view-empty';
         var afterSelector = Drupal.settings.views_autorefresh[response.view_name].incremental.afterSelector || '.view-header';
         var targetStructure = Drupal.settings.views_autorefresh[response.view_name].incremental.targetStructure || '<div class="view-content"></div>';
         if ($(emptySelector, $view).size() > 0) {

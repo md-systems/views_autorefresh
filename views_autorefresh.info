@@ -7,3 +7,4 @@ core = 7.x
 files[] = views/views_autorefresh_handler_argument_base.inc
 files[] = views/views_autorefresh_handler_argument_date.inc
 files[] = views/views_autorefresh_handler_area_autorefresh.inc
+files[] = views_autorefresh.rules.inc

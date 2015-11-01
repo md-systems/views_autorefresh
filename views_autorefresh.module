@@ -33,6 +33,7 @@ function theme_views_autorefresh($variables) {
   $interval = $variables['interval'];
   $ping = $variables['ping'];
   $incremental = $variables['incremental'];
+  $nodejs = $variables['nodejs'];
   $view = $variables['view'];
 
   if (empty($view)) $view = views_get_current_view();
@@ -52,6 +53,7 @@ function theme_views_autorefresh($variables) {
     'interval' => $interval,
     'ping' => $ping,
     'incremental' => $incremental,
+    'nodejs' => $nodejs,
     'timestamp' => __views_autorefresh_get_timestamp($view),
   ))), 'setting');
   $query = drupal_get_query_parameters($_REQUEST, array_merge(array('q', 'pass'), array_keys($_COOKIE)));
@@ -60,6 +62,10 @@ function theme_views_autorefresh($variables) {
   // Signal modules to add their own plugins.
   module_invoke_all('views_autorefresh_plugins', $view);
 
+  // Check for nodejs and create view channel.
+  if (!empty($nodejs) && module_exists('nodejs')) {
+    nodejs_send_content_channel_token('views_autorefresh_' . $view->name . '-' . $view->current_display);
+  }
   return '<div class="auto-refresh">' . $link . '</div>';
 }
 
@@ -110,9 +116,9 @@ function __views_autorefresh_get_timestamp($view) {
  * FIXME: Check if it's necessary to reset any further information
  */
 function views_autorefresh_views_pre_render(&$view) {
-  if (isset($_REQUEST['original_view_data']) && 
-      !empty($_REQUEST['original_view_data']['view_display_id']) && 
-      isset($_REQUEST['original_view_data']['view_dom_id']) && 
+  if (isset($_REQUEST['original_view_data']) &&
+      !empty($_REQUEST['original_view_data']['view_display_id']) &&
+      isset($_REQUEST['original_view_data']['view_dom_id']) &&
       $_REQUEST['original_view_data']['view_dom_id'] == $view->dom_id
   ) {
     $view->current_display = $_REQUEST['original_view_data']['view_display_id'];
@@ -132,3 +138,16 @@ function views_autorefresh_form_views_ui_add_item_form_alter(&$form, $form_state
   }
 }
 
+/**
+ * Refreshes a view through nodejs.
+ */
+function views_autorefresh_nodejs_refresh($views) {
+  foreach ($views as $view_name) {
+    $view_update = (object) array(
+      'channel' => 'views_autorefresh_' . $view_name,
+      'callback' => 'viewsAutoRefresh',
+      'view_name' => $view_name,
+    );
+    nodejs_send_content_channel_message($view_update);
+  }
+}

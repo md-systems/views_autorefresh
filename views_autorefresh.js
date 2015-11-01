@@ -68,9 +68,14 @@ Drupal.behaviors.views_autorefresh = {
                 element_settings.submit = viewData;
                 Drupal.settings.views_autorefresh[view].ajax = new Drupal.ajax(view, this, element_settings);
 
-                // Activate refresh timer.
-                clearTimeout(Drupal.settings.views_autorefresh[view].timer);
-                Drupal.views_autorefresh.timer(view, anchor, target);
+                // Activate refresh timer if not using nodejs.
+                if (!Drupal.settings.views_autorefresh[view].nodejs) {
+                  clearTimeout(Drupal.settings.views_autorefresh[view].timer);
+                  Drupal.views_autorefresh.timer(view, anchor, target);
+                } else { // otherwise prepare to use nodejs
+                  Drupal.settings.views_autorefresh[view].anchor = anchor;
+                  Drupal.settings.views_autorefresh[view].target = target;
+                }
               }); // .each function () {
         }); // $view.filter().each
       });
@@ -81,54 +86,57 @@ Drupal.behaviors.views_autorefresh = {
 Drupal.views_autorefresh.timer = function(view_name, anchor, target) {
   Drupal.settings.views_autorefresh[view_name].timer = setTimeout(function() {
     clearTimeout(Drupal.settings.views_autorefresh[view_name].timer);
-
-    // Turn off "new" items class.
-    $('.views-autorefresh-new', target).removeClass('views-autorefresh-new');
-
-    // Handle ping path.
-    var ping_base_path;
-    if (Drupal.settings.views_autorefresh[view_name].ping) {
-      ping_base_path = Drupal.settings.views_autorefresh[view_name].ping.ping_base_path;
-    }
-
-    // Handle secondary view for incremental refresh.
-    // http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
-    var viewData = Drupal.settings.views_autorefresh[view_name].ajax.submit;
-    var viewArgs = Drupal.settings.views_autorefresh[view_name].view_args;
-    if (Drupal.settings.views_autorefresh[view_name].incremental) {
-      if (!viewData.original_view_data) viewData.original_view_data = $.extend(true, {}, viewData);
-      viewData.view_args = viewArgs + (viewArgs.length ? '/' : '') + Drupal.settings.views_autorefresh[view_name].timestamp;
-      viewData.view_base_path = Drupal.settings.views_autorefresh[view_name].incremental.view_base_path;
-      viewData.view_display_id = Drupal.settings.views_autorefresh[view_name].incremental.view_display_id;
-      viewData.view_name = Drupal.settings.views_autorefresh[view_name].incremental.view_name;
-    }
-    viewData.autorefreshRequest = 'autorefreshRequest';
-    Drupal.settings.views_autorefresh[view_name].ajax.submit = viewData;
-
-    // If there's a ping URL, hit it first.
-    if (ping_base_path) {
-      var pingData = { 'timestamp': Drupal.settings.views_autorefresh[view_name].timestamp };
-      $.extend(pingData, Drupal.settings.views_autorefresh[view_name].ping.ping_args);
-      $.ajax({
-        url: Drupal.settings.basePath + ping_base_path,
-        data: pingData,
-        success: function(response) {
-          if (response.pong && parseInt(response.pong) > 0) {
-            $(target).trigger('autorefresh_ping', parseInt(response.pong));
-            $(anchor).trigger('click');
-          }
-          else {
-            Drupal.views_autorefresh.timer(view_name, anchor, target);
-          }
-        },
-        error: function(xhr) {},
-        dataType: 'json',
-      });
-    }
-    else {
-      $(anchor).trigger('click');
-    }
+    Drupal.views_autorefresh.refresh(view_name, anchor, target)
   }, Drupal.settings.views_autorefresh[view_name].interval);
+}
+
+Drupal.views_autorefresh.refresh = function(view_name, anchor, target) {
+  // Turn off "new" items class.
+  $('.views-autorefresh-new', target).removeClass('views-autorefresh-new');
+
+  // Handle ping path.
+  var ping_base_path;
+  if (Drupal.settings.views_autorefresh[view_name].ping) {
+    ping_base_path = Drupal.settings.views_autorefresh[view_name].ping.ping_base_path;
+  }
+
+  // Handle secondary view for incremental refresh.
+  // http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
+  var viewData = Drupal.settings.views_autorefresh[view_name].ajax.submit;
+  var viewArgs = Drupal.settings.views_autorefresh[view_name].view_args;
+  if (Drupal.settings.views_autorefresh[view_name].incremental) {
+    if (!viewData.original_view_data) viewData.original_view_data = $.extend(true, {}, viewData);
+    viewData.view_args = viewArgs + (viewArgs.length ? '/' : '') + Drupal.settings.views_autorefresh[view_name].timestamp;
+    viewData.view_base_path = Drupal.settings.views_autorefresh[view_name].incremental.view_base_path;
+    viewData.view_display_id = Drupal.settings.views_autorefresh[view_name].incremental.view_display_id;
+    viewData.view_name = Drupal.settings.views_autorefresh[view_name].incremental.view_name;
+  }
+  viewData.autorefreshRequest = 'autorefreshRequest';
+  Drupal.settings.views_autorefresh[view_name].ajax.submit = viewData;
+
+  // If there's a ping URL, hit it first.
+  if (ping_base_path) {
+    var pingData = { 'timestamp': Drupal.settings.views_autorefresh[view_name].timestamp };
+    $.extend(pingData, Drupal.settings.views_autorefresh[view_name].ping.ping_args);
+    $.ajax({
+      url: Drupal.settings.basePath + ping_base_path,
+      data: pingData,
+      success: function(response) {
+        if (response.pong && parseInt(response.pong) > 0) {
+          $(target).trigger('autorefresh_ping', parseInt(response.pong));
+          $(anchor).trigger('click');
+        }
+        else if (!Drupal.settings.views_autorefresh[view_name].nodejs) {
+          Drupal.views_autorefresh.timer(view_name, anchor, target);
+        }
+      },
+      error: function(xhr) {},
+      dataType: 'json',
+    });
+  }
+  else {
+    $(anchor).trigger('click');
+  }
 }
 
 Drupal.ajax.prototype.commands.viewsAutoRefreshTriggerUpdate = function (ajax, response, status) {
@@ -204,13 +212,29 @@ Drupal.ajax.prototype.commands.viewsAutoRefreshIncremental = function (ajax, res
       $view.trigger('autorefresh.incremental', $source.size());
     }
 
-    // Reactivate refresh timer.
-    Drupal.views_autorefresh.timer(response.view_name, $('.auto-refresh a', $view), $view);
+    // Reactivate refresh timer if not using nodejs.
+    if (!Drupal.settings.views_autorefresh[response.view_name].nodejs) {
+      Drupal.views_autorefresh.timer(response.view_name, $('.auto-refresh a', $view), $view);
+    }
 
     // Attach behaviors
     Drupal.attachBehaviors($view);
   }
 }
+
+Drupal.Nodejs = Drupal.Nodejs || { callbacks: {} };
+
+// Callback for nodejs message.
+Drupal.Nodejs.callbacks.viewsAutoRefresh = {
+  callback: function (message) {
+    var view_name = message['view_name'];
+    Drupal.views_autorefresh.refresh(
+      view_name,
+      Drupal.settings.views_autorefresh[view_name].anchor,
+      Drupal.settings.views_autorefresh[view_name].target
+    );
+  }
+};
 
 // END jQuery
 })(jQuery);

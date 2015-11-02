@@ -41,12 +41,12 @@ Drupal.behaviors.views_autorefresh = {
             var target = this;
             $('select,input,textarea', target)
               .click(function () {
-                if (Drupal.settings.views_autorefresh[view] && Drupal.settings.views_autorefresh[view].timer) {
+                if (Drupal.settings.views_autorefresh[view] && !Drupal.settings.views_autorefresh[view].incremental && Drupal.settings.views_autorefresh[view].timer) {
                   clearTimeout(Drupal.settings.views_autorefresh[view].timer);
                 }
               })
               .change(function () {
-                if (Drupal.settings.views_autorefresh[view] && Drupal.settings.views_autorefresh[view].timer) {
+                if (Drupal.settings.views_autorefresh[view] && !Drupal.settings.views_autorefresh[view].incremental && Drupal.settings.views_autorefresh[view].timer) {
                   clearTimeout(Drupal.settings.views_autorefresh[view].timer);
                 }
               });

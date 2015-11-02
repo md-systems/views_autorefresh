@@ -4,7 +4,15 @@
 Drupal.views_autorefresh = Drupal.views_autorefresh || {};
 
 Drupal.behaviors.views_autorefresh = {
+
   attach: function(context, settings) {
+    // Close timers on page unload.
+    window.addEventListener('unload', function(event) {
+      $.each(Drupal.settings.views_autorefresh, function(index, entry) {
+        clearTimeout(entry.timer);
+      });
+    });
+
     if (Drupal.settings && Drupal.settings.views && Drupal.settings.views.ajaxViews) {
       var ajax_path = Drupal.settings.views.ajax_path;
       // If there are multiple views this might've ended up showing up multiple times.
@@ -111,7 +119,7 @@ Drupal.views_autorefresh.refresh = function(view_name, anchor, target) {
     viewData.view_display_id = Drupal.settings.views_autorefresh[view_name].incremental.view_display_id;
     viewData.view_name = Drupal.settings.views_autorefresh[view_name].incremental.view_name;
   }
-  viewData.autorefreshRequest = 'autorefreshRequest';
+  viewData.autorefresh = true;
   Drupal.settings.views_autorefresh[view_name].ajax.submit = viewData;
 
   // If there's a ping URL, hit it first.

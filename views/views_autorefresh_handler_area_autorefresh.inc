@@ -77,7 +77,7 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     $options = array();
     foreach ($this->view->display as $display) {
       if ($display->display_plugin == 'page') {
-        # TODO: check secondary display arguments.
+        // TODO: check secondary display arguments.
         $options[$display->id] = $display->display_title;
       }
     }
@@ -218,7 +218,7 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
         'ping_args' => $this->eval_ping_arguments($this->options['ping_arguments']),
       );
     }
-    if  ($this->options['incremental']) {
+    if ($this->options['incremental']) {
       $display = $this->view->display[$this->options['display']];
 
       $args['incremental'] = array(

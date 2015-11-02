@@ -123,7 +123,11 @@ function views_autorefresh_get_timestamp($view) {
     return time();
   }
 
-  foreach ($view->display[$autorefresh['display']]->display_options['arguments'] as $argument) {
+  $arguments = isset($view->display[$autorefresh['display']]->display_options['arguments']) ?
+    $view->display[$autorefresh['display']]->display_options['arguments'] :
+    $view->display['default']->display_options['arguments'];
+
+  foreach ($arguments as $argument) {
     $handler = views_get_handler($argument['table'], $argument['field'], 'argument');
     if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_date') {
       return time();

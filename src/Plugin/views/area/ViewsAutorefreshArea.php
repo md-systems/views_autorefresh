@@ -1,33 +1,33 @@
 <?php
 
+namespace Drupal\views_autorefresh\Plugin\views\area;
+
+use Drupal\views\Plugin\views\area\AreaPluginBase;
+use Drupal\Core\Form\FormStateInterface;
+use \Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Link;
+
 /**
- * Base class for area handlers.
+ * Defines an area plugin for the Autorefresh header.
  *
  * @ingroup views_area_handlers
+ *
+ * @ViewsArea("views_autorefresh_area")
  */
-class views_autorefresh_handler_area_autorefresh extends views_handler_area {
+class ViewsAutorefreshArea extends AreaPluginBase {
 
   /**
-   * Overrides views_handler_area::init().
-   *
-   * Reset override done in views_handler_area::init(). This area must be
-   * rendered even if view has no results.
+   * {@inheritdoc}
    */
-  function init(&$view, &$options) {
-    parent::init($view, $options);
-  }
-
-  function option_definition() {
-    $options = parent::option_definition();
+  protected function defineOptions() {
+    // @todo  Remove Node.js and incremental refresh settings or port them.
+    $options = parent::defineOptions();
     $options['interval'] = array('default' => '');
     $options['nodejs'] = array('default' => FALSE, 'bool' => TRUE);
     $options['incremental'] = array('default' => FALSE, 'bool' => TRUE);
-    $options['display'] = array('default' => '');
-
     $options['incremental_advanced'] = array(
       'contains' => array(
         'sourceSelector' => array('default' => '.view-content'),
-        'targetSelector' => array('default' => '.view-content'),
         'emptySelector' => array('default' => '.view-empty'),
         'afterSelector' => array('default' => '.view-header'),
         'targetStructure' => array('default' => '<div class="view-content"></div>'),
@@ -45,8 +45,12 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
-    if (module_exists('nodejs')) {
+  /**
+   * {@inheritdoc}
+   */
+  public function buildOptionsForm(&$form, FormStateInterface $form_state) {
+    // @todo  Remove Node.js and incremental refresh settings or port them.
+    if (\Drupal::moduleHandler()->moduleExists('nodejs')) {
       $form['nodejs'] = array(
         '#type' => 'checkbox',
         '#title' => t('Use Node.js to refresh the view instead of interval pings'),
@@ -71,95 +75,89 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     );
     $form['incremental'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Use a secondary view display to incrementally insert new items only'),
+      '#title' => t('Incrementally insert new items. Unless your view is using an overridden template, the defaults below should be fine.'),
       '#default_value' => $this->options['incremental'],
-    );
-    $options = array();
-    foreach ($this->view->display as $display) {
-      if ($display->display_plugin == 'page') {
-        // TODO: check secondary display arguments.
-        $options[$display->id] = $display->display_title;
-      }
-    }
-    $form['display'] = array(
-      '#type' => 'select',
-      '#title' => t('Secondary display'),
-      '#default_value' => $this->options['display'],
-      '#description' => t('Only displays of type page are eligible. Additionally the display must have a timestamp argument of the <em>(with operator)</em> variant. For example <em>Node: Post date (with operator)</em>.'),
-      '#options' => $options,
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
-    );
-    $form['incremental_advanced'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Advanced'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
-      '#description' => t('Advanced settings for incremental display. Unless your view is using an overridden template, the defaults below should be fine.'),
     );
     $form['incremental_advanced']['sourceSelector'] = array(
       '#type' => 'textfield',
-      '#title' => t('Source selector'),
+      '#title' => t('Container selector'),
       '#default_value' => $this->options['incremental_advanced']['sourceSelector'],
-      '#description' => t('A jQuery selector expression representing the main view container of your secondary display.'),
-    );
-    $form['incremental_advanced']['targetSelector'] = array(
-      '#type' => 'textfield',
-      '#title' => t('Target selector'),
-      '#default_value' => $this->options['incremental_advanced']['targetSelector'],
-      '#description' => t('A jQuery selector expression representing the main view container of your primary display.'),
+      '#description' => t('A jQuery selector expression representing the main view container of your display.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['emptySelector'] = array(
       '#type' => 'textfield',
       '#title' => t('Empty selector'),
       '#default_value' => $this->options['incremental_advanced']['emptySelector'],
       '#description' => t('A jQuery selector expression representing the main view container in case of empty results.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['afterSelector'] = array(
       '#type' => 'textfield',
       '#title' => t('Header selector'),
       '#default_value' => $this->options['incremental_advanced']['afterSelector'],
       '#description' => t('A jQuery selector expression representing the view header, in case the header is displayed with empty results.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['targetStructure'] = array(
       '#type' => 'textfield',
       '#title' => t('Target structure'),
       '#default_value' => $this->options['incremental_advanced']['targetStructure'],
       '#description' => t('An HTML fragment describing the view skeleton in case of empty results.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['firstClass'] = array(
       '#type' => 'textfield',
       '#title' => t('First row class'),
       '#default_value' => $this->options['incremental_advanced']['firstClass'],
       '#description' => t('A class to be added to the first result row.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['lastClass'] = array(
       '#type' => 'textfield',
       '#title' => t('Last row class'),
       '#default_value' => $this->options['incremental_advanced']['lastClass'],
       '#description' => t('A class to be added to the last result row.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['oddClass'] = array(
       '#type' => 'textfield',
       '#title' => t('Odd rows class'),
       '#default_value' => $this->options['incremental_advanced']['oddClass'],
       '#description' => t('A class to be added to each odd result row.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['evenClass'] = array(
       '#type' => 'textfield',
       '#title' => t('Even rows class'),
       '#default_value' => $this->options['incremental_advanced']['evenClass'],
       '#description' => t('A class to be added to each even result row.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['incremental_advanced']['rowClassPrefix'] = array(
       '#type' => 'textfield',
       '#title' => t('Row class prefix'),
       '#default_value' => $this->options['incremental_advanced']['rowClassPrefix'],
       '#description' => t('The prefix of a class to be added to each result row. The row number will be appended to this prefix.'),
+      '#dependency' => array(
+        'edit-options-incremental' => array(1),
+      ),
     );
     $form['ping'] = array(
       '#type' => 'checkbox',
@@ -175,6 +173,7 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
       '#dependency' => array(
         'edit-options-ping' => array(1),
       ),
+
     );
     $form['ping_arguments'] = array(
       '#type' => 'textarea',
@@ -187,81 +186,84 @@ class views_autorefresh_handler_area_autorefresh extends views_handler_area {
     );
   }
 
-  function options_validate(&$form, &$form_state) {
-    if (!is_numeric($form_state['values']['options']['interval'])) {
-      form_set_error('interval', t('Invalid interval.'));
-    }
-    if ($form_state['values']['options']['ping']) {
-      $ping_base_path = DRUPAL_ROOT . '/' . $form_state['values']['options']['ping_base_path'];
-      if (!file_exists($ping_base_path)) {
-        form_set_error('ping_base_path', t('Ping script not found at %path.', array('%path' => $ping_base_path)));
-      }
-      $args = $this->eval_ping_arguments($form_state['values']['options']['ping_arguments']);
-      if (!is_array($args)) {
-        form_set_error('ping_arguments', t('Error in ping arguments script: %error', array('%error' => $args)));
-      }
-    }
-  }
+// @todo  Validation.
+//  function options_validate(&$form, &$form_state) {
+//    if (!is_numeric($form_state['values']['options']['interval'])) {
+//      form_set_error('interval', t('Invalid interval.'));
+//    }
+//    if ($form_state['values']['options']['ping']) {
+//      $ping_base_path = DRUPAL_ROOT . '/' . $form_state['values']['options']['ping_base_path'];
+//      if (!file_exists($ping_base_path)) {
+//        form_set_error('ping_base_path', t('Ping script not found at %path.', array('%path' => $ping_base_path)));
+//      }
+//      $args = $this->eval_ping_arguments($form_state['values']['options']['ping_arguments']);
+//      if (!is_array($args)) {
+//        form_set_error('ping_arguments', t('Error in ping arguments script: %error', array('%error' => $args)));
+//      }
+//    }
+//  }
 
-  function options_submit(&$form, &$form_state) {
-    $this->view->display_handler->set_option('use_ajax', TRUE);
-  }
+  /**
+   * {@inheritdoc}
+   */
+  public function render($empty = FALSE) {
+    // @todo Enable AJAX here ?
+    $this->view->display_handler->setOption('use_ajax', TRUE);
 
-  function render($empty = FALSE) {
-    $args = array();
-    $args['view'] = $this->view;
-    $args['nodejs'] = !empty($this->options['nodejs']);
-    $args['interval'] = $this->options['interval'];
-    if ($this->options['ping']) {
-      $args['ping'] = array(
-        'ping_base_path' => $this->options['ping_base_path'],
-        'ping_args' => $this->eval_ping_arguments($this->options['ping_arguments']),
-      );
-    }
-    if ($this->options['incremental']) {
-      $display = $this->view->display[$this->options['display']];
-
-      $args['incremental'] = array(
-        'view_base_path' => $display->display_options['path'],
-        'view_display_id' => $display->id,
-        'view_name' => $this->view->name,
-        'sourceSelector' => $this->options['incremental_advanced']['sourceSelector'],
-        'targetSelector' => $this->options['incremental_advanced']['targetSelector'],
-        'emptySelector' => $this->options['incremental_advanced']['emptySelector'],
-        'afterSelector' => $this->options['incremental_advanced']['afterSelector'],
-        'targetStructure' => $this->options['incremental_advanced']['targetStructure'],
-        'firstClass' => $this->options['incremental_advanced']['firstClass'],
-        'lastClass' => $this->options['incremental_advanced']['lastClass'],
-        'oddClass' => $this->options['incremental_advanced']['oddClass'],
-        'evenClass' => $this->options['incremental_advanced']['evenClass'],
-        'rowClassPrefix' => $this->options['incremental_advanced']['rowClassPrefix'],
-      );
-    }
-
-    return theme('views_autorefresh', $args);
-  }
-
-  function eval_ping_arguments($script) {
-    $args = array();
-    if (empty($script)) return $args;
-
-    // Make view visible to script.
+    $interval = $this->options['interval'];
     $view = $this->view;
 
-    // Avoid Drupal's error handler: http://www.php.net/manual/en/function.restore-error-handler.php#93261
-    set_error_handler(create_function('$errno,$errstr', 'return false;'));
-    $return = eval($script);
-    if ($return === FALSE) {
-      $error = error_get_last();
-      $args = $error['message'];
-    }
-    else if (is_array($return)) {
-      $args = $return;
-    }
-    else {
-      $args = t('expecting an array of arguments, got a !type instead.', array('!type' => gettype($return)));
-    }
-    restore_error_handler();
-    return $args;
+    if (empty($view)) $view = views_get_current_view();
+
+    // Attach the Javascript and the settings.
+    $build['#attached']['library'][] = 'views_autorefresh';
+    $build['#attached']['drupalSettings'][$view->id() . '-' . $view->current_display] = [
+      'interval' => $interval,
+      //'ping' => $ping,
+      //'incremental' => $incremental,
+      //'nodejs' => $nodejs,
+      'timestamp' => $this->views_autorefresh_get_timestamp($view),
+    ];
+
+    // Signal modules to add their own plugins.
+    \Drupal::moduleHandler()->invokeAll('views_autorefresh_plugins', [$view]);
+
+    // Return link to autorefresh.
+    $query = UrlHelper::filterQueryParameters($_REQUEST, array_merge(array('q', 'pass'), array_keys($_COOKIE)));
+    $link = Link::createFromRoute('', '<current>', ['query' => $query]);
+    $link_markup = $link->toString()->getGeneratedLink();
+    return '<div class="auto-refresh">' . $link_markup . '</div>';
   }
+
+  /**
+   * Helper function to return view's "timestamp" - either real timestamp or max primary key in view rows.
+   */
+  function views_autorefresh_get_timestamp($view) {
+    $autorefresh = $view->header['autorefresh']->options;
+    if (empty($autorefresh)) {
+      return FALSE;
+    }
+    if (empty($autorefresh['incremental'])) {
+      return time();
+    }
+    // @todo  Incremental refresh.
+//    foreach ($view->argument as $argument) {
+//      //$handler = views_get_handler($argument->table, $argument->field, 'argument');
+//      $handler = Views::handlerManager($argument->field)->getHandler($argument->table, 'argument');
+//
+//      if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_date') {
+//        return time();
+//      }
+//      else if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_base') {
+//        // Find the max nid/uid/... of the result set.
+//        $max_id = array_reduce($view->result, function($max_id, $row) use ($view) {
+//          return max($max_id, $row->{$view->base_field});
+//        }, ~PHP_INT_MAX);
+//        return $max_id === ~PHP_INT_MAX ? FALSE : $max_id;
+//      }
+//    }
+
+    return FALSE;
+  }
+
 }

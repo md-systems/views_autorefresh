@@ -1,0 +1,7 @@
+name: 'Views Auto-Refresh'
+type: module
+description: 'Allows auto-refreshing of Ajax-enabled views.'
+version: VERSION
+core: 8.x
+dependencies:
+  - views

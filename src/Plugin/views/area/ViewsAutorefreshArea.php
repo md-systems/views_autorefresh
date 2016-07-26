@@ -63,15 +63,29 @@ class ViewsAutorefreshArea extends AreaPluginBase {
         '#value' => FALSE,
       );
     }
+
+    $show_if_incremental_enabled = [
+      'visible' => [
+        ':input[data-drupal-selector="edit-options-incremental"]' => array('checked' => TRUE),
+      ],
+    ];
+    $show_if_ping_enabled = [
+      'visible' => [
+        ':input[data-drupal-selector="edit-options-ping"]' => array('checked' => TRUE),
+      ],
+    ];
+
     $form['interval'] = array(
       '#type' => 'textfield',
       '#title' => t('Interval to check for new items'),
       '#default_value' => $this->options['interval'],
       '#field_suffix' => 'milliseconds',
       '#required' => TRUE,
-      '#dependency' => array(
-        'edit-options-nodejs' => array(0),
-      ),
+      '#states' => [
+        'visible' => [
+          ':input[data-drupal-selector="edit-options-nodejs"]' => array('checked' => FALSE),
+        ],
+      ],
     );
     $form['incremental'] = array(
       '#type' => 'checkbox',
@@ -83,81 +97,63 @@ class ViewsAutorefreshArea extends AreaPluginBase {
       '#title' => t('Container selector'),
       '#default_value' => $this->options['incremental_advanced']['sourceSelector'],
       '#description' => t('A jQuery selector expression representing the main view container of your display.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['emptySelector'] = array(
       '#type' => 'textfield',
       '#title' => t('Empty selector'),
       '#default_value' => $this->options['incremental_advanced']['emptySelector'],
       '#description' => t('A jQuery selector expression representing the main view container in case of empty results.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['afterSelector'] = array(
       '#type' => 'textfield',
       '#title' => t('Header selector'),
       '#default_value' => $this->options['incremental_advanced']['afterSelector'],
       '#description' => t('A jQuery selector expression representing the view header, in case the header is displayed with empty results.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['targetStructure'] = array(
       '#type' => 'textfield',
       '#title' => t('Target structure'),
       '#default_value' => $this->options['incremental_advanced']['targetStructure'],
       '#description' => t('An HTML fragment describing the view skeleton in case of empty results.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['firstClass'] = array(
       '#type' => 'textfield',
       '#title' => t('First row class'),
       '#default_value' => $this->options['incremental_advanced']['firstClass'],
       '#description' => t('A class to be added to the first result row.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['lastClass'] = array(
       '#type' => 'textfield',
       '#title' => t('Last row class'),
       '#default_value' => $this->options['incremental_advanced']['lastClass'],
       '#description' => t('A class to be added to the last result row.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['oddClass'] = array(
       '#type' => 'textfield',
       '#title' => t('Odd rows class'),
       '#default_value' => $this->options['incremental_advanced']['oddClass'],
       '#description' => t('A class to be added to each odd result row.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['evenClass'] = array(
       '#type' => 'textfield',
       '#title' => t('Even rows class'),
       '#default_value' => $this->options['incremental_advanced']['evenClass'],
       '#description' => t('A class to be added to each even result row.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['incremental_advanced']['rowClassPrefix'] = array(
       '#type' => 'textfield',
       '#title' => t('Row class prefix'),
       '#default_value' => $this->options['incremental_advanced']['rowClassPrefix'],
       '#description' => t('The prefix of a class to be added to each result row. The row number will be appended to this prefix.'),
-      '#dependency' => array(
-        'edit-options-incremental' => array(1),
-      ),
+      '#states' => $show_if_incremental_enabled,
     );
     $form['ping'] = array(
       '#type' => 'checkbox',
@@ -170,9 +166,7 @@ class ViewsAutorefreshArea extends AreaPluginBase {
       '#title' => t('Path to the ping script'),
       '#default_value' => $this->options['ping_base_path'],
       '#description' => t('This path is relative to the Drupal root.'),
-      '#dependency' => array(
-        'edit-options-ping' => array(1),
-      ),
+      '#states' => $show_if_ping_enabled,
 
     );
     $form['ping_arguments'] = array(
@@ -180,28 +174,34 @@ class ViewsAutorefreshArea extends AreaPluginBase {
       '#title' => t('Ping arguments'),
       '#default_value' => $this->options['ping_arguments'],
       '#description' => t('A PHP script that generates arguments that will be sent on the ping URL as query parameters. Do not surround with <code>&lt;?php&gt;</code> tag.'),
-      '#dependency' => array(
-        'edit-options-ping' => array(1),
-      ),
+      '#states' => $show_if_ping_enabled,
     );
   }
 
-// @todo  Validation.
-//  function options_validate(&$form, &$form_state) {
-//    if (!is_numeric($form_state['values']['options']['interval'])) {
-//      form_set_error('interval', t('Invalid interval.'));
-//    }
-//    if ($form_state['values']['options']['ping']) {
-//      $ping_base_path = DRUPAL_ROOT . '/' . $form_state['values']['options']['ping_base_path'];
-//      if (!file_exists($ping_base_path)) {
-//        form_set_error('ping_base_path', t('Ping script not found at %path.', array('%path' => $ping_base_path)));
-//      }
-//      $args = $this->eval_ping_arguments($form_state['values']['options']['ping_arguments']);
-//      if (!is_array($args)) {
-//        form_set_error('ping_arguments', t('Error in ping arguments script: %error', array('%error' => $args)));
-//      }
-//    }
-//  }
+  /**
+   * {@inheritdoc}
+   */
+  public function validateOptionsForm(&$form, FormStateInterface $form_state) {
+    if (!is_numeric($form_state->getValue('interval'))) {
+      $form_state->setError($form['interval'], $this->t('Invalid interval.'));
+    }
+    if ($form_state['values']['options']['ping']) {
+      $ping_base_path = DRUPAL_ROOT . '/' . $form_state->getValue('ping_base_path');
+      if (!file_exists($ping_base_path)) {
+        $form_state->setError(
+          $form['ping_base_path'],
+          t('Ping script not found at %path.', array('%path' => $ping_base_path))
+        );
+      }
+      $args = $this->evalPingArguments($form_state->getValue('ping_arguments'));
+      if (!is_array($args)) {
+        $form_state->setError(
+          $form['ping_arguments'],
+          t('Error in ping arguments script: %error', array('%error' => $args))
+        );
+      }
+    }
+  }
 
   /**
    * {@inheritdoc}
@@ -222,7 +222,7 @@ class ViewsAutorefreshArea extends AreaPluginBase {
         //'ping' => $ping,
         //'incremental' => $incremental,
         //'nodejs' => $nodejs,
-        'timestamp' => $this->views_autorefresh_get_timestamp($view),
+        'timestamp' => $this->getTimestamp($view),
       ],
     ];
 
@@ -245,7 +245,7 @@ class ViewsAutorefreshArea extends AreaPluginBase {
   /**
    * Helper function to return view's "timestamp" - either real timestamp or max primary key in view rows.
    */
-  function views_autorefresh_get_timestamp($view) {
+  protected function getTimestamp($view) {
     $autorefresh = $view->header['autorefresh']->options;
     if (empty($autorefresh)) {
       return FALSE;
@@ -271,6 +271,30 @@ class ViewsAutorefreshArea extends AreaPluginBase {
 //    }
 
     return FALSE;
+  }
+
+  /**
+   * @todo
+   */
+  protected function evalPingArguments($script) {
+    $args = array();
+    if (empty($script)) return $args;
+
+    // Avoid Drupal's error handler: http://www.php.net/manual/en/function.restore-error-handler.php#93261
+    set_error_handler(create_function('$errno,$errstr', 'return false;'));
+    $return = eval($script);
+    if ($return === FALSE) {
+      $error = error_get_last();
+      $args = $error['message'];
+    }
+    else if (is_array($return)) {
+      $args = $return;
+    }
+    else {
+      $args = t('expecting an array of arguments, got a !type instead.', array('!type' => gettype($return)));
+    }
+    restore_error_handler();
+    return $args;
   }
 
 }

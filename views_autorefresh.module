@@ -1,14 +1,11 @@
 <?php
 
 /**
- * Implementation of hook_views_api().
+ * @file
+ * Contains hooks for the views_autorefresh module.
  */
-function views_autorefresh_views_api() {
-  return array(
-    'api' => 3.0,
-    'path' => drupal_get_path('module', 'views_autorefresh') . '/views',
-  );
-}
+
+use Drupal\views\ViewExecutable;
 
 /**
  * Implementation of hook_views_ajax_data_alter().
@@ -93,7 +90,7 @@ function views_autorefresh_get_timestamp($view) {
  * Reset information about first display instead of the second display (incremental approach only)
  * FIXME: Check if it's necessary to reset any further information
  */
-function views_autorefresh_views_pre_render(&$view) {
+function views_autorefresh_views_pre_render(ViewExecutable $view) {
   if (isset($_REQUEST['original_view_data']) &&
       !empty($_REQUEST['original_view_data']['view_display_id']) &&
       isset($_REQUEST['original_view_data']['view_dom_id']) &&

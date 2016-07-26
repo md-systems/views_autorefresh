@@ -6,6 +6,7 @@
  */
 
 use Drupal\views\ViewExecutable;
+use Drupal\Core\Link;
 
 /**
  * Implementation of hook_views_ajax_data_alter().
@@ -35,6 +36,50 @@ function views_autorefresh_views_ajax_data_alter(&$commands, $view) {
       );
     }
   }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function views_autorefresh_theme($existing, $type, $theme, $path) {
+  return array(
+    'views_autorefresh_link' => array(
+      'variables' => array(
+        'interval' => NULL,
+        'timestamp' => NULL,
+        'ping' => NULL,
+        'incremental' => NULL,
+        'view' => NULL,
+        'nodejs' => NULL,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements default pre-processing for views_autorefresh_link.
+ */
+function template_preprocess_views_autorefresh_link(&$variables) {
+  $view = $variables['view'];
+  $variables['content'] = [
+    '#type' => 'container',
+    '#attributes' => ['class' => ['auto-refresh']],
+    '#attached' => [
+      'library' => ['views_autorefresh/views_autorefresh'],
+      'drupalSettings' => [
+        'viewsAutorefresh' => [
+          $view->id() . '-' . $view->current_display => [
+            'interval' => $variables['interval'],
+            'timestamp' => $variables['timestamp'],
+            //'ping' => $variables['ping'],
+            //'incremental' => $variables['incremental'],
+            //'nodejs' => $variables['nodejs'],
+          ]
+        ]
+      ],
+    ],
+    'link' => Link::createFromRoute('', '<current>')->toRenderable(),
+  ];
 }
 
 /**

@@ -206,40 +206,21 @@ class ViewsAutorefreshArea extends AreaPluginBase {
    * {@inheritdoc}
    */
   public function render($empty = FALSE) {
-    // @todo Enable AJAX here ? statement below isn't working
+    // @todo Enable AJAX here ? working this way, still requires manual enabling.
     $this->view->display_handler->setOption('use_ajax', TRUE);
 
     $view = $this->view;
     $view = empty($view) ? views_get_current_view() : $view;
 
-    // Create container with attached Javascript and the settings.
-    $build['content'] = [
-      '#type' => 'container',
-      '#attributes' => ['class' => ['auto-refresh']],
-      '#attached' => [
-        'library' => ['views_autorefresh/views_autorefresh'],
-        'drupalSettings' => [
-          'viewsAutorefresh' => [
-            $view->id() . '-' . $view->current_display => [
-              'interval' => $this->options['interval'],
-              //'ping' => $variables['ping'],
-              //'incremental' => $variables['incremental'],
-              //'nodejs' => $variables['nodejs'],
-              'timestamp' => $this->getTimestamp($view),
-            ]
-          ]
-        ],
-      ],
-      'link' => Link::createFromRoute('', '<current>')->toRenderable(),
+    $build = [
+      '#theme' => 'views_autorefresh_link',
+      '#interval' => $this->options['interval'],
+      '#timestamp' => $this->getTimestamp($view),
+      '#view' => $view,
+      //'ping' => $variables['ping'],
+      //'incremental' => $variables['incremental'],
+      //'nodejs' => $variables['nodejs'],
     ];
-
-    // Allow modules to alter the build.
-    \Drupal::moduleHandler()->alter(
-      'views_autorefresh_render_build',
-      $build,
-      $view,
-      $empty
-    );
 
     return $build;
   }

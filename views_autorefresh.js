@@ -73,7 +73,6 @@
                   // with data specific to the link.
                   $.extend(
                     viewData,
-                    Drupal.Views.parseQueryString($(this).attr('href')),
                     // Extract argument data from the URL.
                     Drupal.Views.parseViewArgs($(this).attr('href'), settings.view_base_path),
                     // Settings must be used last to avoid sending url aliases to the server.
@@ -92,7 +91,8 @@
                   if (!drupalSettings.viewsAutorefresh[view].nodejs) {
                     clearTimeout(drupalSettings.viewsAutorefresh[view].timer);
                     Drupal.views_autorefresh.timer(view, anchor, target);
-                  } else { // otherwise prepare to use nodejs
+                  }
+                  else { // otherwise prepare to use nodejs
                     drupalSettings.viewsAutorefresh[view].anchor = anchor;
                     drupalSettings.viewsAutorefresh[view].target = target;
                   }
@@ -241,7 +241,6 @@
       Drupal.attachBehaviors($view);
     }
   };
-
 
   Drupal.Nodejs = Drupal.Nodejs || { callbacks: {} };
 

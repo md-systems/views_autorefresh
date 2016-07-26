@@ -216,18 +216,18 @@ class ViewsAutorefreshArea extends AreaPluginBase {
 
     // Attach the Javascript and the settings.
     $build['#attached']['library'][] = 'views_autorefresh/views_autorefresh';
-    $build['#attached']['drupalSettings']['viewsAutorefresh'][$view->id() . '-' . $view->current_display] = [
-      'interval' => $interval,
-      //'ping' => $ping,
-      //'incremental' => $incremental,
-      //'nodejs' => $nodejs,
-      'timestamp' => $this->views_autorefresh_get_timestamp($view),
+    $build['#attached']['drupalSettings']['viewsAutorefresh'] = [
+      $view->id() . '-' . $view->current_display => [
+        'interval' => $interval,
+        //'ping' => $ping,
+        //'incremental' => $incremental,
+        //'nodejs' => $nodejs,
+        'timestamp' => $this->views_autorefresh_get_timestamp($view),
+      ],
     ];
 
     // Return link to autorefresh.
-    $query = UrlHelper::filterQueryParameters($_REQUEST, array_merge(array('q', 'pass'), array_keys($_COOKIE)));
-    $build['href'] = Link::createFromRoute('', '<current>', ['query' => $query])
-      ->toRenderable();
+    $build['href'] = Link::createFromRoute('', '<current>')->toRenderable();
     $build['href']['#prefix'] = '<div class="auto-refresh">';
     $build['href']['#suffix'] = '</div>';
 

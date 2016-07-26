@@ -11,65 +11,6 @@ function views_autorefresh_views_api() {
 }
 
 /**
- * Implementation of hook_theme().
- */
-function views_autorefresh_theme() {
-  return array(
-    'views_autorefresh' => array(
-      'variables' => array(
-        'interval' => NULL,
-        'ping' => NULL,
-        'incremental' => NULL,
-        'view' => NULL,
-      ),
-    ),
-  );
-}
-
-/**
- * Theme function for 'views_autorefresh'.
- */
-function theme_views_autorefresh($variables) {
-  $interval = $variables['interval'];
-  $ping = $variables['ping'];
-  $incremental = $variables['incremental'];
-  $nodejs = $variables['nodejs'];
-  $view = $variables['view'];
-
-  if (empty($view)) $view = views_get_current_view();
-
-  // Add the JavaScript settings.
-  drupal_add_js(drupal_get_path('module', 'views_autorefresh') . '/views_autorefresh.js');
-  drupal_add_js(array('views_autorefresh' => array($view->name . '-' . $view->current_display => array(
-    'interval' => $interval,
-    'ping' => $ping,
-    'incremental' => $incremental,
-    'nodejs' => $nodejs,
-  ))), 'setting');
-  $timestamp = views_autorefresh_get_timestamp($view);
-  if ($timestamp) {
-    drupal_add_js(array('views_autorefresh' => array($view->name . '-' . $view->current_display => array(
-      'timestamp' => $timestamp,
-    ))), 'setting');
-  }
-
-  // Signal modules to add their own plugins.
-  module_invoke_all('views_autorefresh_plugins', $view);
-
-  // Check for nodejs and create view channel.
-  if (!empty($nodejs) && module_exists('nodejs')) {
-    $channel = 'views_autorefresh_' . $view->name . '-' . $view->current_display;
-    drupal_alter('views_autorefresh_nodejs_channel', $channel, $view);
-    nodejs_send_content_channel_token($channel);
-  }
-
-  // Return link to autorefresh.
-  $query = drupal_get_query_parameters($_REQUEST, array_merge(array('q', 'pass'), array_keys($_COOKIE)));
-  $link = l('', $_GET['q'], array('query' => $query));
-  return '<div class="auto-refresh">' . $link . '</div>';
-}
-
-/**
  * Implementation of hook_views_ajax_data_alter().
  */
 function views_autorefresh_views_ajax_data_alter(&$commands, $view) {

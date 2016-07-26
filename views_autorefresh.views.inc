@@ -9,7 +9,7 @@ function views_autorefresh_views_data_alter(&$data) {
     'title' => t('Autorefresh'),
     'help' => t('Enable autorefresh for this view. NOTE: This will automatically turn AJAX support ON.'),
     'area' => array(
-      'handler' => 'views_autorefresh_handler_area_autorefresh',
+      'id' => 'views_autorefresh_area',
     ),
   );
 
@@ -42,4 +42,3 @@ function views_autorefresh_views_data_alter(&$data) {
     }
   }
 }
-

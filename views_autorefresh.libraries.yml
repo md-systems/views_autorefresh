@@ -5,3 +5,4 @@ views_autorefresh:
   dependencies:
     - core/jquery
     - core/drupalSettings
+    - core/drupal.ajax

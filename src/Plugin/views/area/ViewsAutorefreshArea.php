@@ -207,17 +207,16 @@ class ViewsAutorefreshArea extends AreaPluginBase {
    * {@inheritdoc}
    */
   public function render($empty = FALSE) {
-    // @todo Enable AJAX here ?
+    // @todo Enable AJAX here ? statement below isn't working
     $this->view->display_handler->setOption('use_ajax', TRUE);
 
     $interval = $this->options['interval'];
     $view = $this->view;
-
-    if (empty($view)) $view = views_get_current_view();
+    $view = empty($view) ? views_get_current_view() : $view;
 
     // Attach the Javascript and the settings.
-    $build['#attached']['library'][] = 'views_autorefresh';
-    $build['#attached']['drupalSettings'][$view->id() . '-' . $view->current_display] = [
+    $build['#attached']['library'][] = 'views_autorefresh/views_autorefresh';
+    $build['#attached']['drupalSettings']['viewsAutorefresh'][$view->id() . '-' . $view->current_display] = [
       'interval' => $interval,
       //'ping' => $ping,
       //'incremental' => $incremental,
@@ -225,14 +224,22 @@ class ViewsAutorefreshArea extends AreaPluginBase {
       'timestamp' => $this->views_autorefresh_get_timestamp($view),
     ];
 
-    // Signal modules to add their own plugins.
-    \Drupal::moduleHandler()->invokeAll('views_autorefresh_plugins', [$view]);
-
     // Return link to autorefresh.
     $query = UrlHelper::filterQueryParameters($_REQUEST, array_merge(array('q', 'pass'), array_keys($_COOKIE)));
-    $link = Link::createFromRoute('', '<current>', ['query' => $query]);
-    $link_markup = $link->toString()->getGeneratedLink();
-    return '<div class="auto-refresh">' . $link_markup . '</div>';
+    $build['href'] = Link::createFromRoute('', '<current>', ['query' => $query])
+      ->toRenderable();
+    $build['href']['#prefix'] = '<div class="auto-refresh">';
+    $build['href']['#suffix'] = '</div>';
+
+    // Allow modules to alter the build.
+    \Drupal::moduleHandler()->alter(
+      'views_autorefresh_render_build',
+      $build,
+      $view,
+      $empty
+    );
+
+    return $build;
   }
 
   /**

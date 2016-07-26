@@ -181,18 +181,18 @@ class ViewsAutorefreshArea extends AreaPluginBase {
    * {@inheritdoc}
    */
   public function validateOptionsForm(&$form, FormStateInterface $form_state) {
-    if (!is_numeric($form_state->getValue('interval'))) {
+    if (!is_numeric($form_state->getValue('options')['interval'])) {
       $form_state->setError($form['interval'], $this->t('Invalid interval.'));
     }
-    if ($form_state['values']['options']['ping']) {
-      $ping_base_path = DRUPAL_ROOT . '/' . $form_state->getValue('ping_base_path');
+    if ($form_state->getValue('options')['ping']) {
+      $ping_base_path = DRUPAL_ROOT . '/' . $form_state->getValue('options')['ping_base_path'];
       if (!file_exists($ping_base_path)) {
         $form_state->setError(
           $form['ping_base_path'],
           t('Ping script not found at %path.', array('%path' => $ping_base_path))
         );
       }
-      $args = $this->evalPingArguments($form_state->getValue('ping_arguments'));
+      $args = $this->evalPingArguments($form_state->getValue('options')['ping_arguments']);
       if (!is_array($args)) {
         $form_state->setError(
           $form['ping_arguments'],

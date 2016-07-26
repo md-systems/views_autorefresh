@@ -4,7 +4,6 @@ namespace Drupal\views_autorefresh\Plugin\views\area;
 
 use Drupal\views\Plugin\views\area\AreaPluginBase;
 use Drupal\Core\Form\FormStateInterface;
-use \Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Link;
 
 /**
@@ -210,26 +209,29 @@ class ViewsAutorefreshArea extends AreaPluginBase {
     // @todo Enable AJAX here ? statement below isn't working
     $this->view->display_handler->setOption('use_ajax', TRUE);
 
-    $interval = $this->options['interval'];
     $view = $this->view;
     $view = empty($view) ? views_get_current_view() : $view;
 
-    // Attach the Javascript and the settings.
-    $build['#attached']['library'][] = 'views_autorefresh/views_autorefresh';
-    $build['#attached']['drupalSettings']['viewsAutorefresh'] = [
-      $view->id() . '-' . $view->current_display => [
-        'interval' => $interval,
-        //'ping' => $ping,
-        //'incremental' => $incremental,
-        //'nodejs' => $nodejs,
-        'timestamp' => $this->getTimestamp($view),
+    // Create container with attached Javascript and the settings.
+    $build['content'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['auto-refresh']],
+      '#attached' => [
+        'library' => ['views_autorefresh/views_autorefresh'],
+        'drupalSettings' => [
+          'viewsAutorefresh' => [
+            $view->id() . '-' . $view->current_display => [
+              'interval' => $this->options['interval'],
+              //'ping' => $variables['ping'],
+              //'incremental' => $variables['incremental'],
+              //'nodejs' => $variables['nodejs'],
+              'timestamp' => $this->getTimestamp($view),
+            ]
+          ]
+        ],
       ],
+      'link' => Link::createFromRoute('', '<current>')->toRenderable(),
     ];
-
-    // Return link to autorefresh.
-    $build['href'] = Link::createFromRoute('', '<current>')->toRenderable();
-    $build['href']['#prefix'] = '<div class="auto-refresh">';
-    $build['href']['#suffix'] = '</div>';
 
     // Allow modules to alter the build.
     \Drupal::moduleHandler()->alter(

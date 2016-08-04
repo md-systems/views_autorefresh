@@ -209,16 +209,13 @@ class ViewsAutorefreshArea extends AreaPluginBase {
     // @todo Enable AJAX here ? working this way, still requires manual enabling.
     $this->view->display_handler->setOption('use_ajax', TRUE);
 
-    $view = $this->view;
-    $view = empty($view) ? views_get_current_view() : $view;
-
     $build = [
       '#theme' => 'views_autorefresh_link',
       '#interval' => $this->options['interval'],
-      '#timestamp' => $this->getTimestamp($view),
-      '#view' => $view,
+      '#timestamp' => $this->getTimestamp(),
+      '#view' => $this->view,
       //'ping' => $variables['ping'],
-      //'incremental' => $variables['incremental'],
+      '#incremental' => $this->options['incremental'] ? $this->options['incremental_advanced'] : NULL,
       //'nodejs' => $variables['nodejs'],
     ];
 
@@ -228,30 +225,23 @@ class ViewsAutorefreshArea extends AreaPluginBase {
   /**
    * Helper function to return view's "timestamp" - either real timestamp or max primary key in view rows.
    */
-  protected function getTimestamp($view) {
-    $autorefresh = $view->header['autorefresh']->options;
-    if (empty($autorefresh)) {
-      return FALSE;
-    }
-    if (empty($autorefresh['incremental'])) {
+  protected function getTimestamp() {
+    if (empty($this->options['incremental'])) {
       return time();
     }
-    // @todo  Incremental refresh.
-//    foreach ($view->argument as $argument) {
-//      //$handler = views_get_handler($argument->table, $argument->field, 'argument');
-//      $handler = Views::handlerManager($argument->field)->getHandler($argument->table, 'argument');
-//
-//      if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_date') {
-//        return time();
-//      }
-//      else if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_base') {
-//        // Find the max nid/uid/... of the result set.
-//        $max_id = array_reduce($view->result, function($max_id, $row) use ($view) {
-//          return max($max_id, $row->{$view->base_field});
-//        }, ~PHP_INT_MAX);
-//        return $max_id === ~PHP_INT_MAX ? FALSE : $max_id;
-//      }
-//    }
+    $view = $this->view;
+    foreach ($view->argument as $argument) {
+      if ($argument->definition['id'] == 'views_autorefresh_argument_date') {
+        return time();
+      }
+      else if ($argument->definition['id'] == 'views_autorefresh_argument_base') {
+        // Find the max nid/uid/... of the result set.
+        $max_id = array_reduce($view->result, function($max_id, $row) use ($view) {
+          return max($max_id, $row->{$view->storage->get('base_field')});
+        }, ~PHP_INT_MAX);
+        return $max_id === ~PHP_INT_MAX ? FALSE : $max_id;
+      }
+    }
 
     return FALSE;
   }

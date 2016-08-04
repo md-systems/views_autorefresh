@@ -72,13 +72,13 @@ function template_preprocess_views_autorefresh_link(&$variables) {
             'interval' => $variables['interval'],
             'timestamp' => $variables['timestamp'],
             //'ping' => $variables['ping'],
-            //'incremental' => $variables['incremental'],
+            'incremental' => $variables['incremental'],
             //'nodejs' => $variables['nodejs'],
           ]
         ]
       ],
     ],
-    'link' => Link::createFromRoute('', '<current>')->toRenderable(),
+    'link' => Link::createFromRoute(t('Refresh manually'), '<current>')->toRenderable(),
   ];
 }
 
@@ -98,38 +98,6 @@ function views_autorefresh_get_settings($view) {
 }
 
 /**
- * Helper function to return view's "timestamp" - either real timestamp or max primary key in view rows.
- */
-function views_autorefresh_get_timestamp($view) {
-  $autorefresh = views_autorefresh_get_settings($view);
-  if (empty($autorefresh)) return FALSE;
-
-  if (empty($autorefresh['incremental'])) {
-    return time();
-  }
-
-  $arguments = isset($view->display[$autorefresh['display']]->display_options['arguments']) ?
-    $view->display[$autorefresh['display']]->display_options['arguments'] :
-    $view->display['default']->display_options['arguments'];
-
-  foreach ($arguments as $argument) {
-    $handler = views_get_handler($argument['table'], $argument['field'], 'argument');
-    if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_date') {
-      return time();
-    }
-    else if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_base') {
-      // Find the max nid/uid/... of the result set.
-      $max_id = array_reduce($view->result, function($max_id, $row) use ($view) {
-        return max($max_id, $row->{$view->base_field});
-      }, ~PHP_INT_MAX);
-      return $max_id === ~PHP_INT_MAX ? FALSE : $max_id;
-    }
-  }
-
-  return FALSE;
-}
-
-/**
  * Implements hook_views_pre_render().
  *
  * Reset information about first display instead of the second display (incremental approach only)
@@ -144,20 +112,6 @@ function views_autorefresh_views_pre_render(ViewExecutable $view) {
     $view->current_display = $_REQUEST['original_view_data']['view_display_id'];
   }
 }
-
-/**
- * Implements hook_form_FORM_ID_alter for `views_ui_add_item_form`.
- */
-function views_autorefresh_form_views_ui_add_item_form_alter(&$form, $form_state) {
-  if ($form_state['type'] != 'header') {
-    $type = $form_state['type'];
-    $types = views_object_types();
-    if (isset($types[$type]['type']) && ($types[$type]['type'] == 'area')) {
-      unset($form['options']['name']['views.autorefresh']);
-    }
-  }
-}
-
 /**
  * Refreshes a view through nodejs.
  */

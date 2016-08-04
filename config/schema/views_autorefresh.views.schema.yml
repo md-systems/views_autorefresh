@@ -1,0 +1,41 @@
+views.area.views_autorefresh_area:
+  type: views_area
+  label: 'Views Autorefresh area'
+  mapping:
+    interval:
+      type: integer
+      label: 'Refresh interval in ms'
+    nodejs:
+      type: boolean
+      label: 'Enable nodejs'
+    incremental:
+      type: boolean
+      label: 'Enable incremental updates'
+    ping:
+      type: boolean
+      label: 'Custom ping script'
+    ping_base_path:
+      type: string
+      label: 'Ping script base path'
+    ping_arguments:
+      type: string
+      label: 'Ping arguments'
+    incremental_advanced:
+      type: mapping
+      mapping:
+        sourceSelector:
+          type: string
+        emptySelector:
+          type: string
+        afterSelector:
+          type: string
+        targetStructure:
+          type: string
+        firstClass:
+          type: string
+        oddClass:
+          type: string
+        evenClass:
+          type: string
+        rowClassPrefix:
+          type: string

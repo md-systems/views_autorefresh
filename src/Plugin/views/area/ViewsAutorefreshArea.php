@@ -4,7 +4,6 @@ namespace Drupal\views_autorefresh\Plugin\views\area;
 
 use Drupal\views\Plugin\views\area\AreaPluginBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Link;
 
 /**
  * Defines an area plugin for the Autorefresh header.

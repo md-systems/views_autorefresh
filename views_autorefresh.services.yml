@@ -1,0 +1,6 @@
+services:
+  views_autorefresh.views_ajax_response_subscriber:
+    class: Drupal\views_autorefresh\EventSubscriber\ViewsAjaxResponseSubscriber
+    tags:
+      - { name: event_subscriber }
+    arguments: []

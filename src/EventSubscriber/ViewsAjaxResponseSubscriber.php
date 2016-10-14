@@ -28,7 +28,7 @@ class ViewsAjaxResponseSubscriber implements EventSubscriberInterface {
 
     $view = $event->getResponse()->getView();
     $autorefresh = views_autorefresh_get_settings($view);
-    if (isset($_REQUEST['autorefresh']) && isset($autorefresh)) {
+    if (\Drupal::request()->get('autorefresh') && isset($autorefresh)) {
       foreach ($response->getCommands() as $key => &$command) {
         if (!empty($autorefresh['incremental']) &&
           $command['command'] == 'insert' &&

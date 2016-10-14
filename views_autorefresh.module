@@ -7,35 +7,34 @@
 
 use Drupal\views\ViewExecutable;
 use Drupal\Core\Link;
+use Drupal\views\Views;
 
 /**
- * Implementation of hook_views_ajax_data_alter().
+ * Helper function to return view's "timestamp" - either real timestamp or max primary key in view rows.
  */
-function views_autorefresh_views_ajax_data_alter(&$commands, $view) {
-  $autorefresh = views_autorefresh_get_settings($view);
-  if (isset($_REQUEST['autorefresh']) && isset($autorefresh)) {
-    foreach ($commands as $key => &$command) {
-      if (
-        !empty($autorefresh['incremental']) &&
-        $command['command'] == 'insert' &&
-        $command['selector'] == ('.view-dom-id-' . $view->dom_id)
-      ) {
-        $command['command'] = 'viewsAutoRefreshIncremental';
-        $command['view_name'] = $view->name. '-' . $view->current_display;
-      }
-      if ($command['command'] == 'viewsScrollTop') {
-        unset($commands[$key]);
-      }
+function views_autorefresh_get_timestamp($view) {
+  $autorefresh = $view->header['autorefresh']->options;
+  if (empty($autorefresh)) {
+    return FALSE;
+  }
+  if (empty($autorefresh['incremental'])) {
+    return time();
+  }
+  foreach ($view->argument as $argument) {
+    $handler = Views::handlerManager($argument->field)->getHandler($argument->table, 'argument');
+    if ($handler->definition['handler'] == 'views_autorefresh_handler_argument_date') {
+      return time();
     }
-    $timestamp = views_autorefresh_get_timestamp($view);
-    if ($timestamp) {
-      $commands[] = array(
-        'command' => 'viewsAutoRefreshTriggerUpdate',
-        'selector' => '.view-dom-id-' . $view->dom_id,
-        'timestamp' => $timestamp,
-      );
+    elseif ($handler->definition['handler'] == 'views_autorefresh_handler_argument_base') {
+      // Find the max nid/uid/... of the result set.
+      $max_id = array_reduce($view->result, function ($max_id, $row) use ($view) {
+        return max($max_id, $row->{$view->base_field});
+      }, ~PHP_INT_MAX);
+      return $max_id === ~PHP_INT_MAX ? FALSE : $max_id;
     }
   }
+
+  return FALSE;
 }
 
 /**

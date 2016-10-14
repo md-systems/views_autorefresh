@@ -33,6 +33,8 @@ views.area.views_autorefresh_area:
           type: string
         firstClass:
           type: string
+        lastClass:
+          type: string
         oddClass:
           type: string
         evenClass:

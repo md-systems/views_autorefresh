@@ -60,6 +60,12 @@ function views_autorefresh_theme($existing, $type, $theme, $path) {
  */
 function template_preprocess_views_autorefresh_link(&$variables) {
   $view = $variables['view'];
+  $exposed_input = $view->getExposedInput();
+  // Remove the ajax page state from the query.
+  if (isset($exposed_input['ajax_page_state'])) {
+    unset($exposed_input['ajax_page_state']);
+  }
+  $link = Link::createFromRoute(t('Refresh manually'), '<current>', [], ['query' => $exposed_input])->toRenderable();
   $variables['content'] = [
     '#type' => 'container',
     '#attributes' => ['class' => ['auto-refresh']],
@@ -77,7 +83,7 @@ function template_preprocess_views_autorefresh_link(&$variables) {
         ]
       ],
     ],
-    'link' => Link::createFromRoute(t('Refresh manually'), '<current>')->toRenderable(),
+    'link' => $link,
   ];
 }
 

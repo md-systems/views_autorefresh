@@ -73,6 +73,7 @@
                   // with data specific to the link.
                   $.extend(
                     viewData,
+                    Drupal.Views.parseQueryString($(this).attr('href')),
                     // Extract argument data from the URL.
                     Drupal.Views.parseViewArgs($(this).attr('href'), settings.view_base_path),
                     // Settings must be used last to avoid sending url aliases to the server.

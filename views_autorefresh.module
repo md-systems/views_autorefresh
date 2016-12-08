@@ -13,7 +13,7 @@ use Drupal\views\Views;
  * Helper function to return view's "timestamp" - either real timestamp or max primary key in view rows.
  */
 function views_autorefresh_get_timestamp($view) {
-  $autorefresh = $view->header['autorefresh']->options;
+  $autorefresh = views_autorefresh_get_settings($view);
   if (empty($autorefresh)) {
     return FALSE;
   }

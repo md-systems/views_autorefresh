@@ -1,0 +1,8 @@
+{
+    "name": "md-systems/views_autorefresh",
+    "description": "Views Autorefresh",
+    "type": "drupal-module",
+    "license": "GPL-2.0+",
+    "require": {
+    }
+}

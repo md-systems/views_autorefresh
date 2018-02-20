@@ -34,7 +34,7 @@
             return;
           }
           var viewDom = '.view-dom-id-' + settings.view_dom_id;
-          if (!$(viewDom).size()) {
+          if (!$(viewDom).length) {
             // Backward compatibility: if 'views-view.tpl.php' is old and doesn't
             // contain the 'view-dom-id-#' class, we fall back to the old way of
             // locating the view:
@@ -46,7 +46,7 @@
             .filter(function() {
               // If there is at least one parent with a view class, this view
               // is nested (e.g., an attachment). Bail.
-              return !$(this).parents('.view').size();
+              return !$(this).parents('.view').length;
             })
             .each(function() {
               // Set a reference that will work in subsequent calls.
@@ -177,19 +177,19 @@
       var emptySelector = drupalSettings.viewsAutorefresh[response.view_name].incremental.emptySelector || '.view-empty';
       var sourceSelector = drupalSettings.viewsAutorefresh[response.view_name].incremental.sourceSelector || '.view-content';
       var $source = $(response.data).find(sourceSelector).not(sourceSelector + ' ' + sourceSelector).children();
-      if ($source.size() > 0 && $(emptySelector, $source).size() <= 0) {
+      if ($source.length > 0 && $(emptySelector, $source).length <= 0) {
         var targetSelector = drupalSettings.viewsAutorefresh[response.view_name].incremental.targetSelector || '.view-content';
         var $target = $view.find(targetSelector).not(targetSelector + ' ' + targetSelector);
 
         // If initial view was empty, remove the empty divs then add the target div.
-        if ($target.size() == 0) {
+        if ($target.length == 0) {
           var afterSelector = drupalSettings.viewsAutorefresh[response.view_name].incremental.afterSelector || '.view-header';
           var targetStructure = drupalSettings.viewsAutorefresh[response.view_name].incremental.targetStructure || '<div class="view-content"></div>';
-          if ($(emptySelector, $view).size() > 0) {
+          if ($(emptySelector, $view).length > 0) {
             // replace empty div with content.
             $(emptySelector, $view).replaceWith(targetStructure);
           }
-          else if ($(afterSelector, $view).size() > 0) {
+          else if ($(afterSelector, $view).length > 0) {
             // insert content after given div.
             $view.find(afterSelector).not(targetSelector + ' ' + afterSelector).after(targetStructure);
           }
@@ -230,7 +230,7 @@
         });
 
         // Trigger custom event on any plugin that needs to do extra work.
-        $view.trigger('autorefresh_incremental', $source.size());
+        $view.trigger('autorefresh_incremental', $source.length);
       }
 
       // Reactivate refresh timer if not using nodejs.
